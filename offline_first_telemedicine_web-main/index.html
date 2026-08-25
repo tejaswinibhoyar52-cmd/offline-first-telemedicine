@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setu | Offline-First Telemedicine Platform</title>
+<link rel="icon" href="data:,">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --paper:#F7F9F8;
+  --paper-dim:#EEF2F1;
+  --ink:#0B2436;
+  --ink-soft:#43586A;
+  --bridge:#0E7C7B;
+  --bridge-dark:#0A5F5E;
+  --signal:#1FA7B8;
+  --amber:#C98A2C;
+  --amber-bg:#FBF1DF;
+  --coral:#C4574F;
+  --coral-bg:#FBEAE8;
+  --green:#2E8B57;
+  --green-bg:#E7F3EC;
+  --mist:#E7EEF0;
+  --card:#FFFFFF;
+  --line:#DCE4E4;
+  --radius:10px;
+  --shadow:0 1px 2px rgba(11,36,54,.04), 0 4px 14px rgba(11,36,54,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  line-height:1.5;
+}
+h1,h2,h3,h4{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-0.01em;color:var(--ink)}
+.mono{font-family:'IBM Plex Mono',monospace}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;font-size:14px}
+::selection{background:var(--signal);color:#fff}
+
+/* ---------- Layout shell ---------- */
+#app{min-height:100vh;display:flex;flex-direction:column}
+.topbar{
+  position:sticky;top:0;z-index:40;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 24px;background:var(--card);border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-weight:600;font-size:19px}
+.brand .mark{width:26px;height:26px;position:relative}
+.topbar-right{display:flex;align-items:center;gap:14px}
+
+.net-pill{
+  display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;
+  font-size:12.5px;font-weight:600;font-family:'IBM Plex Mono',monospace;
+  border:1px solid var(--line);
+}
+.net-pill .dot{width:7px;height:7px;border-radius:50%}
+.net-online{background:var(--green-bg);color:#1F6B44;border-color:#c7e5d2}
+.net-online .dot{background:var(--green);box-shadow:0 0 0 3px rgba(46,139,87,.18)}
+.net-offline{background:var(--amber-bg);color:#8a5c14;border-color:#efdcb4}
+.net-offline .dot{background:var(--amber)}
+.net-syncing{background:#E4F3F5;color:var(--bridge-dark);border-color:#bfe3e6}
+.net-syncing .dot{background:var(--signal);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+.offline-banner{
+  background:var(--amber-bg);color:#7a5210;border-bottom:1px solid #efdcb4;
+  padding:9px 24px;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.offline-banner b{font-weight:600}
+
+.shell{display:flex;flex:1;min-height:0}
+.sidebar{
+  width:222px;flex-shrink:0;background:var(--card);border-right:1px solid var(--line);
+  padding:18px 12px;display:flex;flex-direction:column;gap:2px;
+}
+.sidebar .grp-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);padding:14px 10px 6px}
+.side-link{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:14px;font-weight:500;
+  color:var(--ink-soft);
+}
+.side-link:hover{background:var(--paper-dim);color:var(--ink)}
+.side-link.active{background:var(--bridge);color:#fff}
+.side-link .ico{width:16px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px}
+
+.main{flex:1;min-width:0;overflow-y:auto;padding:26px 32px 60px}
+.main-inner{max-width:1180px;margin:0 auto}
+
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;gap:16px;flex-wrap:wrap}
+.page-head h1{font-size:26px}
+.page-head p{color:var(--ink-soft);font-size:14px;margin-top:3px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--bridge);margin-bottom:6px;display:block}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;transition:transform .05s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--bridge);color:#fff}
+.btn-primary:hover{background:var(--bridge-dark)}
+.btn-ghost{background:var(--paper-dim);color:var(--ink)}
+.btn-ghost:hover{background:var(--mist)}
+.btn-outline{border:1px solid var(--line);color:var(--ink)}
+.btn-outline:hover{border-color:var(--bridge);color:var(--bridge)}
+.btn-danger{background:var(--coral-bg);color:var(--coral)}
+.btn-sm{padding:6px 11px;font-size:12.5px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+/* cards & grid */
+.grid{display:grid;gap:16px}
+.g-4{grid-template-columns:repeat(4,1fr)}
+.g-3{grid-template-columns:repeat(3,1fr)}
+.g-2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:980px){.g-4{grid-template-columns:repeat(2,1fr)}.g-3{grid-template-columns:repeat(2,1fr)}}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-pad{padding:18px 20px}
+.stat-card{padding:16px 18px}
+.stat-card .num{font-family:'Fraunces',serif;font-size:30px;font-weight:600;line-height:1}
+.stat-card .lbl{font-size:12.5px;color:var(--ink-soft);margin-top:6px}
+.stat-card .top{display:flex;justify-content:space-between;align-items:flex-start}
+.stat-card .badge-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+
+.section-title{font-size:15px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;justify-content:between;gap:8px}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.b-pending{background:var(--amber-bg);color:#8a5c14}
+.b-synced{background:var(--green-bg);color:#1F6B44}
+.b-syncing{background:#E4F3F5;color:var(--bridge-dark)}
+.b-failed,.b-conflict{background:var(--coral-bg);color:var(--coral)}
+.b-confirmed{background:var(--green-bg);color:#1F6B44}
+.b-completed{background:#E4F3F5;color:var(--bridge-dark)}
+.b-cancelled{background:var(--coral-bg);color:var(--coral)}
+.b-neutral{background:var(--paper-dim);color:var(--ink-soft)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;color:var(--ink-soft);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;padding:9px 12px;border-bottom:1px solid var(--line)}
+td{padding:11px 12px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--paper-dim)}
+
+/* forms */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:5px}
+.field input,.field select,.field textarea{
+  width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);
+}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--signal);outline-offset:1px;border-color:var(--signal)}
+.field textarea{resize:vertical;min-height:70px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* auth */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:
+  radial-gradient(900px 500px at 15% -10%, #E4F3F5 0%, transparent 60%),
+  radial-gradient(900px 500px at 110% 10%, #FBF1DF 0%, transparent 55%), var(--paper);
+  padding:24px}
+.auth-card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:34px 32px}
+.role-tabs{display:flex;gap:6px;background:var(--paper-dim);padding:4px;border-radius:9px;margin-bottom:18px}
+.role-tab{flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:600;border-radius:6px;color:var(--ink-soft)}
+.role-tab.active{background:#fff;color:var(--bridge);box-shadow:0 1px 3px rgba(11,36,54,.12)}
+.demo-creds{background:var(--paper-dim);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--ink-soft);margin-top:14px;font-family:'IBM Plex Mono',monospace}
+
+/* landing */
+.landing-nav{display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:1px solid var(--line)}
+.hero{padding:70px 40px 40px;max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.1fr .9fr;gap:50px;align-items:center}
+@media(max-width:900px){.hero{grid-template-columns:1fr;padding-top:40px}}
+.hero h1{font-size:44px;line-height:1.08;margin-bottom:16px}
+.hero p{font-size:16.5px;color:var(--ink-soft);max-width:520px;margin-bottom:26px}
+.hero .cta-row{display:flex;gap:12px;flex-wrap:wrap}
+
+/* bridge signature graphic */
+.bridge-graphic{position:relative;height:230px;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.bridge-graphic svg{width:100%;height:100%}
+.node-label{font-family:'IBM Plex Mono',monospace;font-size:11px;fill:var(--ink-soft)}
+
+.feature-strip{background:var(--card);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:50px 40px}
+.feature-strip .grid{max-width:1180px;margin:0 auto}
+.feat{padding:4px}
+.feat .n{font-family:'IBM Plex Mono',monospace;color:var(--bridge);font-size:12px;margin-bottom:8px}
+.feat h3{font-size:16.5px;margin-bottom:6px}
+.feat p{font-size:13.5px;color:var(--ink-soft)}
+
+.disclaimer-strip{background:var(--ink);color:#CBD8DF;padding:14px 40px;font-size:12.5px;text-align:center}
+.disclaimer-strip b{color:#fff}
+
+/* empty / loading states */
+.empty-state{padding:40px 20px;text-align:center;color:var(--ink-soft)}
+.empty-state .glyph{font-size:26px;margin-bottom:8px;font-family:'IBM Plex Mono',monospace}
+.spin{width:16px;height:16px;border:2px solid var(--mist);border-top-color:var(--bridge);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* toasts */
+#toast-wrap{position:fixed;bottom:20px;right:20px;z-index:100;display:flex;flex-direction:column;gap:8px;max-width:340px}
+.toast{background:var(--ink);color:#fff;padding:12px 15px;border-radius:9px;font-size:13.5px;box-shadow:0 8px 24px rgba(0,0,0,.2);display:flex;gap:9px;align-items:flex-start;animation:slidein .2s ease}
+.toast.success{background:#1F6B44}
+.toast.error{background:var(--coral)}
+.toast.warn{background:var(--amber)}
+@keyframes slidein{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(11,36,54,.45);display:flex;align-items:center;justify-content:center;z-index:90;padding:20px}
+.modal{background:#fff;border-radius:12px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.modal-body{padding:20px 22px}
+.modal-foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+.close-x{font-size:18px;color:var(--ink-soft);width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.close-x:hover{background:var(--paper-dim)}
+
+/* consultation video mockup */
+.video-stage{background:linear-gradient(160deg,#0B2436,#153B4D);border-radius:14px;padding:20px;color:#fff;position:relative}
+.video-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.video-tile{background:#0e2e3d;border-radius:10px;aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.08);position:relative}
+.video-tile .avatar{width:56px;height:56px;border-radius:50%;background:var(--bridge);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:20px;margin-bottom:8px}
+.video-tile .tag{position:absolute;bottom:8px;left:10px;font-size:11.5px;background:rgba(0,0,0,.4);padding:3px 8px;border-radius:5px}
+.video-controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.vctrl{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px}
+.vctrl:hover{background:rgba(255,255,255,.22)}
+.vctrl.end{background:var(--coral);width:auto;padding:0 18px;border-radius:21px;font-weight:600;font-size:13px;gap:6px}
+.proto-note{background:rgba(255,255,255,.08);border:1px dashed rgba(255,255,255,.25);border-radius:8px;padding:10px 12px;font-size:12px;margin-top:14px;color:#CBD8DF}
+
+/* progress bar */
+.pbar{height:7px;background:var(--paper-dim);border-radius:99px;overflow:hidden}
+.pbar > div{height:100%;background:var(--bridge);border-radius:99px;transition:width .4s ease}
+
+/* sync log */
+.sync-log{max-height:190px;overflow-y:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--paper-dim);border-radius:8px;padding:10px 12px}
+.sync-log .ln{padding:3px 0;color:var(--ink-soft)}
+.sync-log .ln b{color:var(--ink)}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.tab{padding:10px 16px;font-size:13.5px;font-weight:600;color:var(--ink-soft);border-bottom:2px solid transparent}
+.tab.active{color:var(--bridge);border-color:var(--bridge)}
+
+.mob-nav{display:none}
+@media(max-width:780px){
+  .sidebar{display:none}
+  .mob-nav{display:flex;position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);justify-content:space-around;padding:8px 0;z-index:40}
+  .mob-nav a{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;color:var(--ink-soft)}
+  .mob-nav a.active{color:var(--bridge)}
+  .main{padding:18px 16px 20px}
+  .row2,.row3{grid-template-columns:1fr}
+  .hero{padding-left:20px;padding-right:20px}
+}
+footer.site-footer{padding:22px 40px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-soft);text-align:center}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast-wrap"></div>
+
+<script>
+/* =========================================================================
+   SETU — Offline-First Telemedicine Platform
+   Self-contained single-file prototype.
+
+   ARCHITECTURE NOTE (read me):
+   A real MERN deployment (React/Vite client + Node/Express API + MongoDB)
+   cannot run as one static file — a server process and a database are
+   separate long-running services. This file instead simulates that split
+   entirely in the browser, so it can be opened directly with no install:
+
+     - "IndexedDB"  -> the on-device local store (window.indexedDB)
+     - "Cloud/DB"   -> a simulated central MongoDB, kept in a separate
+                       localStorage namespace, only reachable when
+                       navigator.onLine / the demo toggle says ONLINE.
+     - Sync Engine  -> pushes the local Sync Queue to the "cloud" store
+                       and pulls fresh data back, exactly following the
+                       CREATE/UPDATE/DELETE + PENDING/SYNCING/SYNCED/
+                       FAILED/CONFLICT model from the spec.
+
+   This preserves the full offline-first flow — offline capture, sync
+   queue, automatic sync, conflict handling — for demonstration, while
+   being honest that production infra would separate these tiers.
+   ========================================================================= */
+
+const DB_NAME = 'setu_local_db';
+const DB_VERSION = 1;
+const STORES = ['users','patients','doctors','appointments','medicalRecords','consultations','prescriptions','notifications','syncQueue','meta'];
+let idb = null;
+
+function openLocalDB(){
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e)=>{
+      const db = e.target.result;
+      STORES.forEach(name=>{
+        if(!db.objectStoreNames.contains(name)) db.createObjectStore(name,{keyPath:'id'});
+      });
+    };
+    req.onsuccess = ()=>{ idb = req.result; resolve(idb); };
+    req.onerror = ()=> reject(req.error);
+  });
+}
+function idbAll(store){
+  return new Promise((res,rej)=>{
+    const tx = idb.transaction(store,'readonly').objectStore(store).getAll();
+    tx.onsuccess=()=>res(tx.result); tx.onerror=()=>rej(tx.error);
+  });
+}
+function idbPut(store,val){
+  return new Promise((res,rej)=>{
+    const tx = idb.transaction(store,'readwrite').objectStore(store).put(val);
+    tx.onsuccess=()=>res(val); tx.onerror=()=>rej(tx.error);
+  });
+}
+function idbDel(store,id){
+  return new Promise((res,rej)=>{
+    const tx = idb.transaction(store,'readwrite').objectStore(store).delete(id);
+    tx.onsuccess=()=>res(); tx.onerror=()=>rej(tx.error);
+  });
+}
+function idbClearAll(){
+  return new Promise((res)=>{
+    const tx = idb.transaction(STORES,'readwrite');
+    STORES.forEach(s=>tx.objectStore(s).clear());
+    tx.oncomplete=()=>res();
+  });
+}
+
+/* ---------------- Simulated Cloud (MongoDB stand-in) -------------------- */
+const CLOUD_KEY = 'setu_cloud_db_v1';
+function cloudRead(){
+  const raw = localStorage.getItem(CLOUD_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+function cloudWrite(db){ localStorage.setItem(CLOUD_KEY, JSON.stringify(db)); }
+function cloudCollection(name){
+  const db = cloudRead(); return db[name] || [];
+}
+function cloudUpsert(name, record){
+  const db = cloudRead(); db[name] = db[name]||[];
+  const i = db[name].findIndex(r=>r.id===record.id);
+  if(i>-1) db[name][i]=record; else db[name].push(record);
+  cloudWrite(db); return record;
+}
+function cloudDelete(name,id){
+  const db = cloudRead(); db[name]=(db[name]||[]).filter(r=>r.id!==id); cloudWrite(db);
+}
+
+/* ---------------- Utilities ---------------- */
+function uid(prefix){ return prefix+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4); }
+function nowISO(){ return new Date().toISOString(); }
+function fmtDate(iso){ const d=new Date(iso); return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtTime(iso){ const d=new Date(iso); return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}); }
+function fmtDateTime(iso){ return fmtDate(iso)+', '+fmtTime(iso); }
+function esc(s){ return (s??'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function initials(name){ return (name||'?').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase(); }
+
+let toastSeq=0;
+function toast(msg,type='info',ms=3800){
+  const id='t'+(toastSeq++);
+  const wrap=document.getElementById('toast-wrap');
+  const el=document.createElement('div');
+  el.className='toast '+(type==='info'?'':type);
+  el.id=id;
+  const icon = type==='success'?'&#10003;': type==='error'?'&#33;': type==='warn'?'&#9888;':'&#8505;';
+  el.innerHTML = `<span>${icon}</span><span>${esc(msg)}</span>`;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(20px)'; el.style.transition='.25s'; setTimeout(()=>el.remove(),250); }, ms);
+}
+
+/* ---------------- App State ---------------- */
+const AppState = {
+  isOnline: navigator.onLine,
+  demoOfflineForced: false,   // manual "Simulate Offline Mode" toggle
+  currentUser: null,          // {id, role, name, ...}
+  route: '#/',
+  syncing: false,
+  syncLog: [],
+  data: { users:[],patients:[],doctors:[],appointments:[],medicalRecords:[],consultations:[],prescriptions:[],notifications:[],syncQueue:[] }
+};
+function effectiveOnline(){ return AppState.isOnline && !AppState.demoOfflineForced; }
+
+async function refreshLocalCache(){
+  for(const s of ['users','patients','doctors','appointments','medicalRecords','consultations','prescriptions','notifications','syncQueue']){
+    AppState.data[s] = await idbAll(s);
+  }
+}
+
+/* ---------------- Seed Data ---------------- */
+const SPECIALIZATIONS = ['General Physician','Pediatrics','Gynecology','Cardiology','Dermatology'];
+const DOCTOR_NAMES = ['Dr. Ashok Deshmukh','Dr. Meera Kulkarni','Dr. Sanjay Rao','Dr. Priya Nair','Dr. Vikram Joshi'];
+const PATIENT_NAMES = ['Ramesh Patil','Sita Devi','Mahesh Yadav','Anjali Verma','Rohit Sharma','Kavita Pawar','Suresh Gaikwad','Lata Kadam','Imran Sheikh','Pooja More'];
+const VILLAGES = ['Wadgaon','Shirur','Baramati','Karad','Sangamner','Junnar','Indapur','Phaltan','Daund','Mulshi'];
+
+function buildSeed(){
+  const users=[], patients=[], doctors=[], appointments=[], medicalRecords=[], consultations=[], prescriptions=[], notifications=[];
+
+  const adminUser = {id:uid('usr'), role:'admin', name:'Admin Office', email:'admin@setu.health', password:'admin123', createdAt:nowISO()};
+  users.push(adminUser);
+
+  DOCTOR_NAMES.forEach((name,i)=>{
+    const userId = uid('usr');
+    users.push({id:userId, role:'doctor', name, email:`doctor${i+1}@setu.health`, password:'doctor123', createdAt:nowISO()});
+    doctors.push({
+      id:uid('doc'), userId, name, specialization: SPECIALIZATIONS[i%SPECIALIZATIONS.length],
+      qualification:'MBBS, MD', experience: 5+i*3, availability:'09:00-17:00', village:VILLAGES[i],
+      version:1, syncStatus:'SYNCED', updatedAt:nowISO(), lastSyncedAt:nowISO()
+    });
+  });
+
+  PATIENT_NAMES.forEach((name,i)=>{
+    const userId = uid('usr');
+    users.push({id:userId, role:'patient', name, email:`patient${i+1}@setu.health`, password:'patient123', createdAt:nowISO()});
+    patients.push({
+      id:uid('pat'), userId, name, age: 22+i*4, gender: i%2===0?'Male':'Female',
+      phone:`98${(10000000+i*137).toString().slice(0,8)}`, village: VILLAGES[i], bloodGroup:['O+','A+','B+','AB+','O-'][i%5],
+      version:1, syncStatus:'SYNCED', updatedAt:nowISO(), lastSyncedAt:nowISO()
+    });
+  });
+
+  // appointments (12+)
+  const statuses=['CONFIRMED','PENDING','COMPLETED','CANCELLED'];
+  for(let i=0;i<13;i++){
+    const pat = patients[i%patients.length], doc = doctors[i%doctors.length];
+    const day = new Date(); day.setDate(day.getDate() + (i-5));
+    appointments.push({
+      id:uid('apt'), patientId:pat.id, doctorId:doc.id, patientName:pat.name, doctorName:doc.name,
+      date: day.toISOString().slice(0,10), time: ['09:30','10:15','11:00','14:00','15:30'][i%5],
+      reason: ['Fever & cough','Routine checkup','Follow-up','Skin rash','ANC visit','Chest pain','Child vaccination'][i%7],
+      status: statuses[i%statuses.length],
+      version:1, syncStatus:'SYNCED', createdAt:nowISO(), updatedAt:nowISO(), lastSyncedAt:nowISO()
+    });
+  }
+
+  // medical records (12+)
+  const recTypes=['Lab Report','X-Ray Report','ECG Report','Blood Report','Doctor Notes'];
+  for(let i=0;i<12;i++){
+    const pat = patients[i%patients.length];
+    medicalRecords.push({
+      id:uid('rec'), patientId:pat.id, patientName:pat.name, type: recTypes[i%recTypes.length],
+      title: recTypes[i%recTypes.length]+' — '+fmtDate(new Date(Date.now()-i*86400000*3).toISOString()),
+      summary: ['Values within normal range.','Mild anemia noted, iron supplementation advised.','No acute findings.','Follow-up recommended in 2 weeks.'][i%4],
+      date: new Date(Date.now()-i*86400000*3).toISOString(),
+      version:1, syncStatus:'SYNCED', updatedAt:nowISO(), lastSyncedAt:nowISO()
+    });
+  }
+
+  // consultations (sample)
+  for(let i=0;i<6;i++){
+    const pat = patients[i%patients.length], doc = doctors[i%doctors.length];
+    consultations.push({
+      id:uid('con'), patientId:pat.id, doctorId:doc.id, patientName:pat.name, doctorName:doc.name,
+      symptoms:['Fever, cough','Headache, fatigue','Abdominal pain','Skin irritation'][i%4],
+      observations:'Vitals recorded by field healthcare worker.',
+      diagnosisNotes:'Educational note only — not a definitive diagnosis. Correlate clinically.',
+      treatmentNotes:'Symptomatic care advised; review in follow-up.',
+      followUpDate: new Date(Date.now()+7*86400000).toISOString().slice(0,10),
+      date: new Date(Date.now()-i*86400000*2).toISOString(),
+      version:1, syncStatus:'SYNCED', updatedAt:nowISO(), lastSyncedAt:nowISO()
+    });
+  }
+
+  // prescriptions (12+)
+  const meds=[{n:'Paracetamol 650mg',d:'1 tablet',f:'Twice daily',du:'5 days',i:'After meals'},
+              {n:'Amoxicillin 500mg',d:'1 capsule',f:'Thrice daily',du:'7 days',i:'After meals'},
+              {n:'Cetirizine 10mg',d:'1 tablet',f:'Once daily',du:'3 days',i:'At night'},
+              {n:'ORS Sachet',d:'1 sachet',f:'As needed',du:'3 days',i:'Dissolve in 1L water'}];
+  for(let i=0;i<12;i++){
+    const pat=patients[i%patients.length], doc=doctors[i%doctors.length];
+    prescriptions.push({
+      id:uid('rx'), patientId:pat.id, doctorId:doc.id, patientName:pat.name, doctorName:doc.name,
+      date:new Date(Date.now()-i*86400000).toISOString(),
+      medicines:[meds[i%meds.length], meds[(i+1)%meds.length]],
+      notes:'Educational prototype prescription — not a substitute for in-person clinical judgement.',
+      version:1, syncStatus:'SYNCED', updatedAt:nowISO(), lastSyncedAt:nowISO()
+    });
+  }
+
+  notifications.push(
+    {id:uid('ntf'), userRole:'patient', title:'Appointment confirmed', body:'Your appointment request was confirmed by the clinic.', read:false, createdAt:nowISO()},
+    {id:uid('ntf'), userRole:'doctor', title:'New patient assigned', body:'A new patient record is now visible in your queue.', read:false, createdAt:nowISO()},
+    {id:uid('ntf'), userRole:'admin', title:'Sync conflict detected', body:'One record needs manual review in the Sync dashboard.', read:false, createdAt:nowISO()}
+  );
+
+  return {users,patients,doctors,appointments,medicalRecords,consultations,prescriptions,notifications};
+}
+
+async function ensureSeeded(){
+  let cloud = cloudRead();
+  if(!cloud){
+    const seed = buildSeed();
+    cloud = {...seed, syncQueue:[]};
+    cloudWrite(cloud);
+  }
+  // first-run local cache: pull everything down once (simulates initial online sync)
+  const meta = await idbAll('meta');
+  if(!meta.find(m=>m.id==='seeded')){
+    for(const store of ['users','patients','doctors','appointments','medicalRecords','consultations','prescriptions','notifications']){
+      for(const rec of cloud[store]) await idbPut(store, rec);
+    }
+    await idbPut('meta',{id:'seeded', at:nowISO()});
+    await idbPut('meta',{id:'lastSync', at:nowISO()});
+  }
+  await refreshLocalCache();
+}
+/* ---------------- Offline-first write path ---------------- */
+// Every mutation: write to IndexedDB immediately, enqueue a SyncQueue item.
+// If online right now, the sync engine is kicked off right after.
+async function writeLocal(store, record, operation){
+  const isNew = !record.version;
+  record.updatedAt = nowISO();
+  record.deviceId = record.deviceId || getDeviceId();
+  record.version = (record.version||0) + (operation==='UPDATE'?1:0) || 1;
+  record.syncStatus = 'PENDING';
+  await idbPut(store, record);
+
+  const qItem = {
+    id: uid('sq'), entityType: store, entityId: record.id, operation,
+    payload: record, timestamp: nowISO(), retryCount: 0, status: 'PENDING', errorMessage: null
+  };
+  await idbPut('syncQueue', qItem);
+  await refreshLocalCache();
+
+  if(effectiveOnline()){ processSyncQueue(); } else { logSync(`Queued ${operation} on ${store} (${record.id}) — offline, will sync later.`); }
+  return record;
+}
+async function deleteLocal(store, id){
+  await idbDel(store, id);
+  const qItem = {id:uid('sq'), entityType:store, entityId:id, operation:'DELETE', payload:{id}, timestamp:nowISO(), retryCount:0, status:'PENDING', errorMessage:null};
+  await idbPut('syncQueue', qItem);
+  await refreshLocalCache();
+  if(effectiveOnline()) processSyncQueue(); else logSync(`Queued DELETE on ${store} (${id}) — offline.`);
+}
+function getDeviceId(){
+  let d = localStorage.getItem('setu_device_id');
+  if(!d){ d = uid('dev'); localStorage.setItem('setu_device_id', d); }
+  return d;
+}
+function logSync(line){
+  AppState.syncLog.unshift(`[${fmtTime(nowISO())}] ${line}`);
+  AppState.syncLog = AppState.syncLog.slice(0,40);
+}
+
+/* ---------------- Sync Engine ---------------- */
+async function processSyncQueue(){
+  if(!effectiveOnline() || AppState.syncing) return;
+  const queue = (await idbAll('syncQueue')).filter(q=>q.status==='PENDING' || q.status==='FAILED');
+  if(queue.length===0) return;
+
+  AppState.syncing = true;
+  render();
+  logSync(`Sync started — ${queue.length} pending change(s).`);
+
+  for(const item of queue){
+    item.status='SYNCING'; await idbPut('syncQueue', item);
+    render();
+    await wait(450 + Math.random()*350); // simulate network latency
+
+    try{
+      if(item.operation==='DELETE'){
+        cloudDelete(item.entityType, item.entityId);
+        await idbDel(item.entityType, item.entityId);
+        item.status='SYNCED';
+        logSync(`DELETE ${item.entityType} ${item.entityId} → synced.`);
+      } else {
+        const cloudColl = cloudCollection(item.entityType);
+        const serverRec = cloudColl.find(r=>r.id===item.entityId);
+        // conflict check: server was updated after this local edit was based on
+        if(serverRec && item.payload.baseUpdatedAt && serverRec.updatedAt > item.payload.baseUpdatedAt && serverRec.version !== item.payload.version-1){
+          item.status='CONFLICT';
+          item.errorMessage = 'Server record changed since your last sync.';
+          const localRec = await idbAllFind(item.entityType, item.entityId);
+          if(localRec){ localRec.syncStatus='CONFLICT'; await idbPut(item.entityType, localRec); }
+          logSync(`CONFLICT on ${item.entityType} ${item.entityId} — needs manual review.`);
+        } else {
+          const synced = {...item.payload, syncStatus:'SYNCED', lastSyncedAt:nowISO()};
+          cloudUpsert(item.entityType, synced);
+          await idbPut(item.entityType, synced);
+          item.status='SYNCED';
+          logSync(`${item.operation} ${item.entityType} ${item.entityId} → synced.`);
+        }
+      }
+    }catch(err){
+      item.retryCount+=1; item.status='FAILED'; item.errorMessage=String(err.message||err);
+      logSync(`FAILED ${item.entityType} ${item.entityId}: ${item.errorMessage}`);
+    }
+    await idbPut('syncQueue', item);
+  }
+
+  await idbPut('meta',{id:'lastSync', at:nowISO()});
+  await refreshLocalCache();
+  AppState.syncing = false;
+  const synced = queue.filter(q=>q.status==='SYNCED').length;
+  const conflicts = queue.filter(q=>q.status==='CONFLICT').length;
+  const failed = queue.filter(q=>q.status==='FAILED').length;
+  if(conflicts>0) toast(`Sync finished with ${conflicts} conflict(s) to review.`,'warn');
+  else if(failed>0) toast(`Sync finished — ${failed} item(s) failed, will retry.`,'error');
+  else if(synced>0) toast(`Synchronized ${synced} change(s) successfully.`,'success');
+  render();
+}
+function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+async function idbAllFind(store,id){ const all = await idbAll(store); return all.find(r=>r.id===id); }
+
+async function retryFailed(){
+  const q = await idbAll('syncQueue');
+  for(const item of q){ if(item.status==='FAILED'){ item.status='PENDING'; item.errorMessage=null; await idbPut('syncQueue', item); } }
+  await refreshLocalCache(); render();
+  processSyncQueue();
+}
+async function resolveConflict(queueId, keepServer){
+  const q = await idbAll('syncQueue');
+  const item = q.find(i=>i.id===queueId);
+  if(!item) return;
+  if(keepServer){
+    const serverRec = cloudCollection(item.entityType).find(r=>r.id===item.entityId);
+    if(serverRec) await idbPut(item.entityType, {...serverRec, syncStatus:'SYNCED'});
+    logSync(`Conflict resolved on ${item.entityType} ${item.entityId} — kept SERVER version.`);
+  } else {
+    const merged = {...item.payload, version:(item.payload.version||1)+1, syncStatus:'SYNCED', lastSyncedAt:nowISO()};
+    cloudUpsert(item.entityType, merged);
+    await idbPut(item.entityType, merged);
+    logSync(`Conflict resolved on ${item.entityType} ${item.entityId} — kept LOCAL version.`);
+  }
+  item.status='SYNCED'; await idbPut('syncQueue', item);
+  await refreshLocalCache();
+  toast('Conflict resolved.','success');
+  render();
+}
+
+/* ---------------- Network listeners + demo toggle ---------------- */
+window.addEventListener('online', ()=>{ AppState.isOnline=true; render(); if(effectiveOnline()){ toast('Connection restored — synchronizing…','info'); processSyncQueue(); } });
+window.addEventListener('offline', ()=>{ AppState.isOnline=false; render(); toast('You are offline. Changes will be saved locally.','warn'); });
+
+function toggleDemoOffline(){
+  AppState.demoOfflineForced = !AppState.demoOfflineForced;
+  render();
+  if(AppState.demoOfflineForced){
+    toast('Simulated offline mode ON — try creating an appointment or note.','warn');
+    logSync('Demo offline mode enabled.');
+  } else {
+    toast('Connection restored — synchronizing…','info');
+    logSync('Demo offline mode disabled — restoring connection.');
+    processSyncQueue();
+  }
+}
+/* ---------------- Auth ---------------- */
+function currentPatientRecord(){ return AppState.data.patients.find(p=>p.userId===AppState.currentUser.id); }
+function currentDoctorRecord(){ return AppState.data.doctors.find(d=>d.userId===AppState.currentUser.id); }
+
+function login(email,password,role){
+  const user = AppState.data.users.find(u=>u.email===email && u.password===password && u.role===role);
+  if(!user){ toast('Invalid credentials for this role. Try a demo account below.','error'); return false; }
+  AppState.currentUser = user;
+  sessionStorage.setItem('setu_session', JSON.stringify(user));
+  location.hash = '#/'+role+'/dashboard';
+  toast(`Welcome back, ${user.name.split(' ')[0]}.`,'success');
+  return true;
+}
+function registerPatient(form){
+  if(AppState.data.users.find(u=>u.email===form.email)){ toast('An account with this email already exists.','error'); return; }
+  const userId = uid('usr');
+  const user = {id:userId, role:'patient', name:form.name, email:form.email, password:form.password, createdAt:nowISO()};
+  const patient = {id:uid('pat'), userId, name:form.name, age:Number(form.age)||0, gender:form.gender, phone:form.phone, village:form.village, bloodGroup:form.bloodGroup||'—', version:1, syncStatus:'PENDING'};
+  idbPut('users',user).then(async ()=>{
+    await writeLocal('patients', patient, 'CREATE');
+    cloudUpsert('users', user); // account creation treated as immediately provisioned
+    AppState.currentUser = user;
+    sessionStorage.setItem('setu_session', JSON.stringify(user));
+    await refreshLocalCache();
+    location.hash='#/patient/dashboard';
+    toast('Account created. Welcome to Setu.','success');
+  });
+}
+function logout(){
+  AppState.currentUser=null; sessionStorage.removeItem('setu_session'); location.hash='#/login';
+}
+
+/* ---------------- Router / Nav config ---------------- */
+const NAV = {
+  patient:[
+    {path:'dashboard', label:'Dashboard', ico:'▤'},
+    {path:'appointments', label:'Appointments', ico:'▦'},
+    {path:'records', label:'Medical Records', ico:'▥'},
+    {path:'prescriptions', label:'Prescriptions', ico:'▧'},
+    {path:'consultation', label:'Consultation', ico:'◍'},
+    {path:'sync', label:'Synchronization', ico:'⇅'},
+  ],
+  doctor:[
+    {path:'dashboard', label:'Dashboard', ico:'▤'},
+    {path:'patients', label:'Patients', ico:'▥'},
+    {path:'appointments', label:'Appointments', ico:'▦'},
+    {path:'consultation', label:'Consultation', ico:'◍'},
+    {path:'prescriptions', label:'Prescriptions', ico:'▧'},
+    {path:'sync', label:'Synchronization', ico:'⇅'},
+  ],
+  admin:[
+    {path:'dashboard', label:'Dashboard', ico:'▤'},
+    {path:'patients', label:'Patients', ico:'▥'},
+    {path:'doctors', label:'Doctors', ico:'✚'},
+    {path:'appointments', label:'Appointments', ico:'▦'},
+    {path:'sync', label:'Synchronization', ico:'⇅'},
+    {path:'reports', label:'Reports', ico:'▨'},
+    {path:'settings', label:'Settings', ico:'⚙'},
+  ]
+};
+
+function router(){
+  const hash = location.hash || '#/';
+  AppState.route = hash;
+  const parts = hash.replace('#/','').split('/').filter(Boolean);
+
+  if(!AppState.currentUser && parts[0] && parts[0]!=='login' && parts[0]!=='register' && parts[0]!==''){
+    location.hash = '#/login'; return;
+  }
+  render();
+}
+window.addEventListener('hashchange', router);
+/* ---------------- Render root ---------------- */
+function render(){
+  const app = document.getElementById('app');
+  const hash = location.hash || '#/';
+
+  if(!AppState.currentUser){
+    if(hash==='#/register'){ app.innerHTML = viewRegister(); attachAuthHandlers(); return; }
+    if(hash==='#/login' || hash.startsWith('#/login')){ app.innerHTML = viewLogin(); attachAuthHandlers(); return; }
+    app.innerHTML = viewLanding(); attachLandingHandlers(); return;
+  }
+
+  const parts = hash.replace('#/','').split('/').filter(Boolean);
+  const role = AppState.currentUser.role;
+  if(parts[0] !== role){ location.hash = '#/'+role+'/dashboard'; return; }
+  const page = parts[1] || 'dashboard';
+
+  app.innerHTML = viewShell(role, page);
+  attachShellHandlers(role, page);
+}
+
+function pendingCount(){ return AppState.data.syncQueue.filter(q=>q.status==='PENDING'||q.status==='FAILED').length; }
+function conflictCount(){ return AppState.data.syncQueue.filter(q=>q.status==='CONFLICT').length; }
+
+function netPillHTML(){
+  if(AppState.syncing) return `<div class="net-pill net-syncing"><span class="dot"></span>SYNCING ${pendingCount()>0?'· '+pendingCount()+' pending':''}</div>`;
+  if(!effectiveOnline()) return `<div class="net-pill net-offline"><span class="dot"></span>OFFLINE</div>`;
+  return `<div class="net-pill net-online"><span class="dot"></span>ONLINE</div>`;
+}
+function offlineBannerHTML(){
+  if(effectiveOnline()) return '';
+  return `<div class="offline-banner">⬤ <b>Offline Mode</b> — your changes are saved on this device and will sync automatically once you're back online. ${pendingCount()>0?`<span class="mono">(${pendingCount()} pending)</span>`:''}</div>`;
+}
+
+function viewShell(role, page){
+  const links = NAV[role].map(n=>`
+    <a href="#/${role}/${n.path}" class="side-link ${page===n.path?'active':''}">
+      <span class="ico">${n.ico}</span>${n.label}
+    </a>`).join('');
+
+  return `
+  <div>
+    ${offlineBannerHTML()}
+    <div class="topbar">
+      <div class="brand">${brandMark()}Setu</div>
+      <div class="topbar-right">
+        ${netPillHTML()}
+        <button class="btn btn-sm ${AppState.demoOfflineForced?'btn-danger':'btn-outline'}" data-action="toggle-demo-offline">
+          ${AppState.demoOfflineForced?'Restore Connection':'Simulate Offline Mode'}
+        </button>
+        <div style="display:flex;align-items:center;gap:8px;padding-left:6px;border-left:1px solid var(--line)">
+          <div style="width:30px;height:30px;border-radius:50%;background:var(--mist);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--bridge-dark)">${initials(AppState.currentUser.name)}</div>
+          <div style="font-size:13px">
+            <div style="font-weight:600">${esc(AppState.currentUser.name)}</div>
+            <div style="color:var(--ink-soft);font-size:11px;text-transform:capitalize">${role}</div>
+          </div>
+          <button class="btn btn-sm btn-ghost" data-action="logout">Log out</button>
+        </div>
+      </div>
+    </div>
+    <div class="shell">
+      <div class="sidebar">${links}</div>
+      <div class="main"><div class="main-inner" id="page-root">${pageContent(role,page)}</div></div>
+    </div>
+    <div class="mob-nav">
+      ${NAV[role].slice(0,5).map(n=>`<a href="#/${role}/${n.path}" class="${page===n.path?'active':''}"><span>${n.ico}</span>${n.label.split(' ')[0]}</a>`).join('')}
+    </div>
+  </div>`;
+}
+function brandMark(){
+  return `<svg class="mark" viewBox="0 0 26 26"><circle cx="5" cy="13" r="4" fill="#0E7C7B"/><circle cx="21" cy="13" r="4" fill="#1FA7B8"/><line x1="9" y1="13" x2="17" y2="13" stroke="#0E7C7B" stroke-width="2.5" stroke-dasharray="1 4" stroke-linecap="round"/></svg>`;
+}
+function pageContent(role,page){
+  try{
+    if(role==='patient'){
+      if(page==='dashboard') return patientDashboard();
+      if(page==='appointments') return patientAppointments();
+      if(page==='records') return patientRecords();
+      if(page==='prescriptions') return patientPrescriptions();
+      if(page==='consultation') return consultationView('patient');
+      if(page==='sync') return syncDashboard();
+    }
+    if(role==='doctor'){
+      if(page==='dashboard') return doctorDashboard();
+      if(page==='patients') return doctorPatients();
+      if(page==='appointments') return doctorAppointments();
+      if(page==='consultation') return consultationView('doctor');
+      if(page==='prescriptions') return doctorPrescriptions();
+      if(page==='sync') return syncDashboard();
+    }
+    if(role==='admin'){
+      if(page==='dashboard') return adminDashboard();
+      if(page==='patients') return adminPatients();
+      if(page==='doctors') return adminDoctors();
+      if(page==='appointments') return adminAppointments();
+      if(page==='sync') return syncDashboard();
+      if(page==='reports') return adminReports();
+      if(page==='settings') return adminSettings();
+    }
+    return emptyState('Page not found','This section is still under construction.');
+  }catch(err){
+    console.error(err);
+    return emptyState('Something went wrong rendering this page', String(err.message||err));
+  }
+}
+function emptyState(title,body){
+  return `<div class="card"><div class="empty-state"><div class="glyph">∅</div><h3 style="margin-bottom:6px">${esc(title)}</h3><p>${esc(body)}</p></div></div>`;
+}
+function pageHead(eyebrow,title,sub,rightHTML=''){
+  return `<div class="page-head"><div>${eyebrow?`<span class="eyebrow">${esc(eyebrow)}</span>`:''}<h1>${esc(title)}</h1>${sub?`<p>${esc(sub)}</p>`:''}</div><div style="display:flex;gap:10px">${rightHTML}</div></div>`;
+}
+function badgeFor(status){
+  const map={PENDING:'b-pending',SYNCED:'b-synced',SYNCING:'b-syncing',FAILED:'b-failed',CONFLICT:'b-conflict',
+             CONFIRMED:'b-confirmed',COMPLETED:'b-completed',CANCELLED:'b-cancelled'};
+  return `<span class="badge ${map[status]||'b-neutral'}">${status}</span>`;
+}
+/* ---------------- Landing / Auth views ---------------- */
+function viewLanding(){
+  return `
+  <div>
+    <div class="landing-nav">
+      <div class="brand">${brandMark()}Setu</div>
+      <div style="display:flex;gap:10px">
+        <a href="#/login" class="btn btn-outline">Log in</a>
+        <a href="#/register" class="btn btn-primary">Register</a>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div>
+        <span class="eyebrow">Offline-first telemedicine</span>
+        <h1>Healthcare that keeps working when the network doesn't.</h1>
+        <p>Setu lets patients and doctors in low-connectivity areas keep consulting, prescribing and recording care offline — then synchronizes everything the moment a connection returns.</p>
+        <div class="cta-row">
+          <a href="#/register" class="btn btn-primary">Get started as a patient</a>
+          <a href="#/login" class="btn btn-outline">I'm a doctor / admin</a>
+        </div>
+      </div>
+      <div class="bridge-graphic">
+        <svg viewBox="0 0 420 230">
+          <rect x="0" y="0" width="420" height="230" fill="#F7F9F8"/>
+          <text x="26" y="40" class="node-label">VILLAGE CLINIC</text>
+          <circle cx="60" cy="110" r="26" fill="#0E7C7B"/>
+          <text x="42" y="115" fill="#fff" font-size="11" font-family="IBM Plex Mono">device</text>
+          <text x="300" y="40" class="node-label">HOSPITAL NETWORK</text>
+          <circle cx="360" cy="110" r="26" fill="#1FA7B8"/>
+          <text x="336" y="115" fill="#fff" font-size="11" font-family="IBM Plex Mono">cloud</text>
+          <line x1="86" y1="110" x2="334" y2="110" stroke="#C9DADA" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round"/>
+          <circle cx="120" cy="110" r="4" fill="#1FA7B8"><animate attributeName="cx" values="90;330;90" dur="3.5s" repeatCount="indefinite"/></circle>
+          <text x="150" y="150" class="node-label" font-size="10">local storage → sync queue → cloud sync</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="feature-strip">
+      <div class="grid g-3">
+        <div class="feat"><div class="n">01</div><h3>Works with no signal</h3><p>Consultation notes, prescriptions and records stay usable offline, cached from the last sync.</p></div>
+        <div class="feat"><div class="n">02</div><h3>Automatic synchronization</h3><p>A sync queue tracks every offline change and pushes it the moment connectivity returns.</p></div>
+        <div class="feat"><div class="n">03</div><h3>Safe conflict handling</h3><p>Conflicting edits are never silently overwritten — they're flagged for review, server vs. local.</p></div>
+      </div>
+    </div>
+
+    <div class="disclaimer-strip">
+      <b>Educational prototype.</b> Setu does not provide medical diagnoses or auto-prescribe medication, and is not a substitute for a licensed healthcare professional. In an emergency, seek immediate in-person medical care.
+    </div>
+    <footer class="site-footer">Setu — Offline-First Telemedicine Platform · Demo build for evaluation purposes</footer>
+  </div>`;
+}
+function attachLandingHandlers(){}
+
+function roleTabsHTML(active){
+  return `<div class="role-tabs">
+    ${['patient','doctor','admin'].map(r=>`<div class="role-tab ${active===r?'active':''}" data-role="${r}">${r[0].toUpperCase()+r.slice(1)}</div>`).join('')}
+  </div>`;
+}
+function viewLogin(){
+  const role = window.__loginRole || 'patient';
+  const demo = {patient:'patient1@setu.health / patient123', doctor:'doctor1@setu.health / doctor123', admin:'admin@setu.health / admin123'}[role];
+  return `<div class="auth-wrap"><div class="auth-card">
+    <div class="brand" style="margin-bottom:20px">${brandMark()}Setu</div>
+    <h2 style="font-size:20px;margin-bottom:4px">Log in</h2>
+    <p style="color:var(--ink-soft);font-size:13.5px;margin-bottom:18px">Choose your role and sign in to continue.</p>
+    ${roleTabsHTML(role)}
+    <form id="login-form">
+      <div class="field"><label>Email</label><input type="email" name="email" required placeholder="you@setu.health"></div>
+      <div class="field"><label>Password</label><input type="password" name="password" required placeholder="••••••••"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" type="submit">Log in as ${role}</button>
+    </form>
+    <div class="demo-creds">Demo credentials: ${demo}</div>
+    <p style="text-align:center;font-size:13px;margin-top:16px;color:var(--ink-soft)">New patient? <a href="#/register" style="color:var(--bridge);font-weight:600">Create an account</a></p>
+    <p style="text-align:center;font-size:12.5px;margin-top:6px"><a href="#/" style="color:var(--ink-soft)">&larr; Back to home</a></p>
+  </div></div>`;
+}
+function viewRegister(){
+  return `<div class="auth-wrap"><div class="auth-card">
+    <div class="brand" style="margin-bottom:20px">${brandMark()}Setu</div>
+    <h2 style="font-size:20px;margin-bottom:4px">Create a patient account</h2>
+    <p style="color:var(--ink-soft);font-size:13.5px;margin-bottom:18px">Doctor and admin accounts are provisioned by the clinic — use the demo logins.</p>
+    <form id="register-form">
+      <div class="field"><label>Full name</label><input name="name" required placeholder="Ramesh Patil"></div>
+      <div class="field"><label>Email</label><input type="email" name="email" required placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><input type="password" name="password" required minlength="4" placeholder="At least 4 characters"></div>
+      <div class="row2">
+        <div class="field"><label>Age</label><input type="number" name="age" required min="0"></div>
+        <div class="field"><label>Gender</label><select name="gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Phone</label><input name="phone" required placeholder="98XXXXXXXX"></div>
+        <div class="field"><label>Village / Town</label><input name="village" required placeholder="e.g. Baramati"></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" type="submit">Create account</button>
+    </form>
+    <p style="text-align:center;font-size:13px;margin-top:16px;color:var(--ink-soft)">Already registered? <a href="#/login" style="color:var(--bridge);font-weight:600">Log in</a></p>
+  </div></div>`;
+}
+function attachAuthHandlers(){
+  document.querySelectorAll('.role-tab').forEach(t=>t.addEventListener('click',()=>{ window.__loginRole=t.dataset.role; render(); }));
+  const lf=document.getElementById('login-form');
+  if(lf) lf.addEventListener('submit',(e)=>{ e.preventDefault(); const f=new FormData(lf); login(f.get('email'),f.get('password'), window.__loginRole||'patient'); });
+  const rf=document.getElementById('register-form');
+  if(rf) rf.addEventListener('submit',(e)=>{ e.preventDefault(); const f=new FormData(rf); registerPatient(Object.fromEntries(f.entries())); });
+}
+/* ---------------- Patient pages ---------------- */
+function patientDashboard(){
+  const pat = currentPatientRecord();
+  const myAppts = AppState.data.appointments.filter(a=>a.patientId===pat?.id).sort((a,b)=>a.date.localeCompare(b.date));
+  const upcoming = myAppts.filter(a=>a.status==='CONFIRMED'||a.status==='PENDING').slice(0,1)[0];
+  const myRecords = AppState.data.medicalRecords.filter(r=>r.patientId===pat?.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  const myRx = AppState.data.prescriptions.filter(r=>r.patientId===pat?.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  const lastSync = lastSyncLabel();
+
+  return `
+  ${pageHead('Patient', `Welcome, ${pat?.name?.split(' ')[0]||'there'}`, "Here is what's happening with your care.")}
+  <div class="grid g-4" style="margin-bottom:20px">
+    ${statCard('Upcoming visit', upcoming? fmtDate(upcoming.date):'None', '#E4F3F5','var(--bridge-dark)','◍')}
+    ${statCard('Medical records', myRecords.length ? AppState.data.medicalRecords.filter(r=>r.patientId===pat?.id).length : 0, 'var(--paper-dim)','var(--ink)','▥')}
+    ${statCard('Active prescriptions', AppState.data.prescriptions.filter(r=>r.patientId===pat?.id).length,'#E7F3EC','#1F6B44','▧')}
+    ${statCard('Pending sync', pendingCount(), pendingCount()>0?'var(--amber-bg)':'var(--paper-dim)', pendingCount()>0?'var(--amber)':'var(--ink)','⇅')}
+  </div>
+
+  <div class="grid g-2">
+    <div class="card card-pad">
+      <div class="section-title">Quick actions</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <a href="#/patient/appointments" class="btn btn-outline">Book appointment</a>
+        <a href="#/patient/records" class="btn btn-outline">My records</a>
+        <a href="#/patient/prescriptions" class="btn btn-outline">My prescriptions</a>
+        <a href="#/patient/consultation" class="btn btn-outline">Consult doctor</a>
+        <button class="btn btn-outline" data-action="manual-sync">Sync data</button>
+      </div>
+      <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-soft)">
+        Last synchronization: <b class="mono" style="color:var(--ink)">${lastSync}</b> &nbsp;·&nbsp; Pending changes: <b class="mono" style="color:var(--ink)">${pendingCount()}</b>
+      </div>
+    </div>
+    <div class="card card-pad">
+      <div class="section-title">Upcoming appointment</div>
+      ${upcoming ? apptRow(upcoming,'patient') : emptyStateInline('No upcoming appointment','Book one from the Appointments page.')}
+    </div>
+  </div>
+
+  <div class="grid g-2" style="margin-top:16px">
+    <div class="card card-pad">
+      <div class="section-title">Recent medical records</div>
+      ${myRecords.length? myRecords.map(recRow).join('') : emptyStateInline('No records yet','Records added by your doctor will appear here.')}
+    </div>
+    <div class="card card-pad">
+      <div class="section-title">Recent prescriptions</div>
+      ${myRx.length? myRx.map(rxRow).join('') : emptyStateInline('No prescriptions yet','')}
+    </div>
+  </div>`;
+}
+function lastSyncLabel(){
+  const m = AppState.data.meta; // not cached; compute via idb read fallback
+  return window.__lastSyncLabel || 'just now';
+}
+function statCard(label,value,bg,fg,ico){
+  return `<div class="card stat-card"><div class="top"><div class="badge-ico" style="background:${bg};color:${fg}">${ico}</div></div>
+    <div class="num">${esc(String(value))}</div><div class="lbl">${esc(label)}</div></div>`;
+}
+function emptyStateInline(title,body){
+  return `<div style="padding:18px 0;text-align:center;color:var(--ink-soft)"><div style="font-size:13.5px;font-weight:600;color:var(--ink)">${esc(title)}</div>${body?`<div style="font-size:12.5px;margin-top:3px">${esc(body)}</div>`:''}</div>`;
+}
+function apptRow(a,viewer){
+  const other = viewer==='patient'? a.doctorName : a.patientName;
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)">
+    <div><div style="font-weight:600;font-size:13.5px">${esc(other)}</div><div style="font-size:12px;color:var(--ink-soft)">${fmtDate(a.date)} · ${a.time} · ${esc(a.reason)}</div></div>
+    ${badgeFor(a.status)}
+  </div>`;
+}
+function recRow(r){
+  return `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
+    <div style="display:flex;justify-content:space-between"><span style="font-weight:600;font-size:13.5px">${esc(r.title)}</span>${badgeFor(r.syncStatus)}</div>
+    <div style="font-size:12px;color:var(--ink-soft);margin-top:2px">${esc(r.summary)}</div></div>`;
+}
+function rxRow(r){
+  return `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
+    <div style="display:flex;justify-content:space-between"><span style="font-weight:600;font-size:13.5px">${esc(r.doctorName)} · ${fmtDate(r.date)}</span>${badgeFor(r.syncStatus)}</div>
+    <div style="font-size:12px;color:var(--ink-soft);margin-top:2px">${r.medicines.map(m=>esc(m.n)).join(', ')}</div></div>`;
+}
+
+function patientAppointments(){
+  const pat = currentPatientRecord();
+  const mine = AppState.data.appointments.filter(a=>a.patientId===pat?.id).sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  ${pageHead('Patient','Appointments','Book a new visit or manage existing ones.', `<button class="btn btn-primary" data-action="open-book-appt">+ Book appointment</button>`)}
+  <div class="card">
+    <table>
+      <thead><tr><th>Doctor</th><th>Date & time</th><th>Reason</th><th>Status</th><th>Sync</th><th></th></tr></thead>
+      <tbody>
+      ${mine.length? mine.map(a=>`
+        <tr>
+          <td><b>${esc(a.doctorName)}</b></td>
+          <td>${fmtDate(a.date)} · ${a.time}</td>
+          <td>${esc(a.reason)}</td>
+          <td>${badgeFor(a.status)}</td>
+          <td>${badgeFor(a.syncStatus)}</td>
+          <td>${(a.status==='PENDING'||a.status==='CONFIRMED')?`<button class="btn btn-sm btn-danger" data-action="cancel-appt" data-id="${a.id}">Cancel</button>`:''}</td>
+        </tr>`).join('') : `<tr><td colspan="6">${emptyStateInline('No appointments yet','Book your first appointment above.')}</td></tr>`}
+      </tbody>
+    </table>
+  </div>`;
+}
+function doctorOptionsHTML(){
+  return AppState.data.doctors.map(d=>`<option value="${d.id}">${esc(d.name)} — ${esc(d.specialization)}</option>`).join('');
+}
+
+function patientRecords(){
+  const pat = currentPatientRecord();
+  const recs = AppState.data.medicalRecords.filter(r=>r.patientId===pat?.id).sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  ${pageHead('Patient','Medical records','Demo clinical data — for evaluation purposes only.')}
+  <div class="field" style="max-width:320px;margin-bottom:16px"><input id="rec-search" placeholder="Search records…"></div>
+  <div class="grid g-2" id="records-grid">
+    ${recs.length? recs.map(r=>`
+      <div class="card card-pad rec-card" data-title="${esc(r.title.toLowerCase())}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><span class="eyebrow">${esc(r.type)}</span><h3 style="font-size:15.5px">${esc(r.title)}</h3></div>
+          ${badgeFor(r.syncStatus)}
+        </div>
+        <p style="font-size:13px;color:var(--ink-soft);margin:8px 0">${esc(r.summary)}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-soft)">
+          <span>${fmtDate(r.date)}</span>
+          <button class="btn btn-sm btn-outline" data-action="download-record" data-id="${r.id}" ${effectiveOnline()?'':'disabled'}>${effectiveOnline()?'Download':'Offline — cached view only'}</button>
+        </div>
+      </div>`).join('') : emptyState('No medical records yet','Records added during consultations will appear here, and remain viewable offline.')}
+  </div>`;
+}
+
+function patientPrescriptions(){
+  const pat = currentPatientRecord();
+  const rx = AppState.data.prescriptions.filter(r=>r.patientId===pat?.id).sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  ${pageHead('Patient','Prescriptions','Issued by your doctor. Educational reference only.')}
+  <div class="grid g-2">
+  ${rx.length? rx.map(prescriptionCard).join('') : emptyState('No prescriptions yet','')}
+  </div>`;
+}
+function prescriptionCard(r){
+  return `<div class="card card-pad">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><span class="eyebrow">${fmtDate(r.date)}</span><h3 style="font-size:15.5px">${esc(r.doctorName)}</h3><div style="font-size:12.5px;color:var(--ink-soft)">for ${esc(r.patientName)}</div></div>
+      ${badgeFor(r.syncStatus)}
+    </div>
+    <table style="margin-top:12px"><thead><tr><th>Medicine</th><th>Dosage</th><th>Freq.</th><th>Duration</th></tr></thead>
+    <tbody>${r.medicines.map(m=>`<tr><td>${esc(m.n)}</td><td>${esc(m.d)}</td><td>${esc(m.f)}</td><td>${esc(m.du)}</td></tr>`).join('')}</tbody></table>
+    <p style="font-size:12px;color:var(--ink-soft);margin-top:10px">${esc(r.notes)}</p>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button class="btn btn-sm btn-outline" data-action="print-rx" data-id="${r.id}">Print</button>
+      <button class="btn btn-sm btn-outline" data-action="download-rx" data-id="${r.id}" ${effectiveOnline()?'':'disabled'}>Download</button>
+    </div>
+  </div>`;
+}
+/* ---------------- Consultation (video prototype) ---------------- */
+function consultationView(viewer){
+  const you = AppState.currentUser.name;
+  const other = viewer==='patient' ? (AppState.data.doctors[0]?.name||'Doctor') : (AppState.data.patients[0]?.name||'Patient');
+  return `
+  ${pageHead(viewer[0].toUpperCase()+viewer.slice(1),'Consultation', effectiveOnline()? 'Live consultation prototype.' : 'You are offline — live video is unavailable, but you can still write and save notes.')}
+  <div class="grid" style="grid-template-columns:1.4fr .9fr;gap:18px" id="consult-grid">
+    <div class="video-stage">
+      <div class="video-grid">
+        <div class="video-tile"><div class="avatar">${initials(other)}</div><span class="tag">${esc(other)}</span></div>
+        <div class="video-tile"><div class="avatar">${initials(you)}</div><span class="tag">${esc(you)} (you)</span></div>
+      </div>
+      <div class="video-controls">
+        <button class="vctrl" title="Mute">🎤</button>
+        <button class="vctrl" title="Camera">🎥</button>
+        <button class="vctrl" title="Chat">💬</button>
+        <button class="vctrl" title="Records">📋</button>
+        <button class="vctrl end" data-action="end-call">End call</button>
+      </div>
+      <div class="proto-note">${effectiveOnline() ? 'Working prototype interface.' : 'Offline — video call disabled.'} Real deployment would require WebRTC and secure, compliant telehealth infrastructure — this view demonstrates the workflow only, not a production video call.</div>
+    </div>
+    <div class="card card-pad">
+      <div class="section-title">${viewer==='doctor'?'Consultation notes':'Session summary'}</div>
+      ${viewer==='doctor' ? consultNotesForm() : `<p style="font-size:13.5px;color:var(--ink-soft)">Your doctor's notes and any prescription from this session will appear in your records once saved.</p>`}
+    </div>
+  </div>`;
+}
+function consultNotesForm(){
+  const pats = AppState.data.patients;
+  return `<form id="consult-form">
+    <div class="field"><label>Patient</label><select name="patientId" required>${pats.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></div>
+    <div class="field"><label>Symptoms</label><input name="symptoms" placeholder="e.g. Fever, cough" required></div>
+    <div class="field"><label>Observations</label><textarea name="observations" placeholder="Vitals, exam findings…"></textarea></div>
+    <div class="field"><label>Diagnosis notes <span style="font-weight:400;color:var(--ink-soft)">(educational, not definitive)</span></label><textarea name="diagnosisNotes"></textarea></div>
+    <div class="field"><label>Treatment notes</label><textarea name="treatmentNotes"></textarea></div>
+    <div class="field"><label>Follow-up date</label><input type="date" name="followUpDate"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" type="submit">${effectiveOnline()?'Save consultation':'Save offline — will sync later'}</button>
+  </form>`;
+}
+
+/* ---------------- Synchronization dashboard ---------------- */
+function syncDashboard(){
+  const q = AppState.data.syncQueue.slice().sort((a,b)=>b.timestamp.localeCompare(a.timestamp));
+  const synced = q.filter(i=>i.status==='SYNCED').length;
+  const failed = q.filter(i=>i.status==='FAILED').length;
+  const conflicts = q.filter(i=>i.status==='CONFLICT').length;
+  const pending = q.filter(i=>i.status==='PENDING'||i.status==='SYNCING').length;
+  const total = q.length||1;
+  const pct = Math.round((synced/total)*100);
+
+  const collections = ['patients','appointments','consultations','prescriptions','medicalRecords'];
+  const collStatus = collections.map(c=>{
+    const items = AppState.data.syncQueue.filter(i=>i.entityType===c);
+    const hasPending = items.some(i=>i.status==='PENDING'||i.status==='SYNCING');
+    const hasConflict = items.some(i=>i.status==='CONFLICT');
+    const label = c==='medicalRecords'?'Medical Records': c[0].toUpperCase()+c.slice(1);
+    const state = hasConflict? ['⚠ Conflict','b-conflict'] : hasPending? ['↑ Syncing','b-syncing'] : ['✓ Synced','b-synced'];
+    return `<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line)"><span style="font-size:13.5px">${label}</span><span class="badge ${state[1]}">${state[0]}</span></div>`;
+  }).join('');
+
+  return `
+  ${pageHead('Sync','Synchronization dashboard','Monitor offline changes and resolve conflicts.',
+    `<button class="btn btn-outline" data-action="retry-failed" ${failed===0?'disabled':''}>Retry failed</button>
+     <button class="btn btn-primary" data-action="manual-sync" ${effectiveOnline()?'':'disabled'}>${AppState.syncing?'Syncing…':'Sync now'}</button>`)}
+
+  <div class="grid g-4" style="margin-bottom:18px">
+    ${statCard('Pending changes',pending,'var(--amber-bg)','var(--amber)','⇅')}
+    ${statCard('Successful syncs',synced,'var(--green-bg)','#1F6B44','✓')}
+    ${statCard('Failed syncs',failed,'var(--coral-bg)','var(--coral)','✕')}
+    ${statCard('Conflicts',conflicts,conflicts>0?'var(--coral-bg)':'var(--paper-dim)',conflicts>0?'var(--coral)':'var(--ink)','⚠')}
+  </div>
+
+  <div class="grid g-2" style="margin-bottom:18px">
+    <div class="card card-pad">
+      <div class="section-title">Collection status</div>
+      ${collStatus}
+      <div style="margin-top:14px"><div class="pbar"><div style="width:${pct}%"></div></div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:6px">${pct}% of tracked changes synced</div></div>
+    </div>
+    <div class="card card-pad">
+      <div class="section-title">Sync activity log</div>
+      <div class="sync-log">${AppState.syncLog.length? AppState.syncLog.map(l=>`<div class="ln">${esc(l)}</div>`).join('') : '<div class="ln">No activity yet this session.</div>'}</div>
+    </div>
+  </div>
+
+  ${conflicts>0 ? `<div class="card card-pad" style="margin-bottom:18px;border-color:#f0c9c5">
+    <div class="section-title" style="color:var(--coral)">Conflicts needing review</div>
+    ${q.filter(i=>i.status==='CONFLICT').map(conflictRow).join('')}
+  </div>`:''}
+
+  <div class="card">
+    <div style="padding:14px 20px;font-weight:600;font-size:14px;border-bottom:1px solid var(--line)">Sync queue</div>
+    <table>
+      <thead><tr><th>ID</th><th>Entity</th><th>Operation</th><th>Time</th><th>Status</th><th>Retry</th></tr></thead>
+      <tbody>
+      ${q.length? q.slice(0,25).map(i=>`
+        <tr><td class="mono">${i.id.slice(0,10)}</td><td>${i.entityType}</td><td>${i.operation}</td>
+        <td>${fmtDateTime(i.timestamp)}</td><td>${badgeFor(i.status)}</td><td>${i.retryCount}</td></tr>`).join('')
+        : `<tr><td colspan="6">${emptyStateInline('Sync queue is empty','Every offline change you make will appear here.')}</td></tr>`}
+      </tbody>
+    </table>
+  </div>`;
+}
+function conflictRow(item){
+  const serverRec = cloudCollection(item.entityType).find(r=>r.id===item.entityId) || {};
+  return `<div style="padding:12px 0;border-bottom:1px solid var(--line)">
+    <div style="font-size:13.5px;font-weight:600;margin-bottom:6px">${item.entityType} · ${item.entityId}</div>
+    <div class="row2" style="margin-bottom:10px">
+      <div class="mono" style="font-size:11.5px;background:var(--paper-dim);padding:8px;border-radius:6px">SERVER<br>updated ${fmtDateTime(serverRec.updatedAt||item.timestamp)}</div>
+      <div class="mono" style="font-size:11.5px;background:var(--paper-dim);padding:8px;border-radius:6px">LOCAL<br>updated ${fmtDateTime(item.payload.updatedAt||item.timestamp)}</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sm btn-outline" data-action="resolve-conflict" data-id="${item.id}" data-keep="server">Keep server version</button>
+      <button class="btn btn-sm btn-primary" data-action="resolve-conflict" data-id="${item.id}" data-keep="local">Keep local version</button>
+    </div>
+  </div>`;
+}
+/* ---------------- Doctor pages ---------------- */
+function doctorDashboard(){
+  const doc = currentDoctorRecord();
+  const myAppts = AppState.data.appointments.filter(a=>a.doctorId===doc?.id);
+  const today = new Date().toISOString().slice(0,10);
+  const todays = myAppts.filter(a=>a.date===today);
+  const pendingConsults = myAppts.filter(a=>a.status==='PENDING').length;
+  const completed = myAppts.filter(a=>a.status==='COMPLETED').length;
+  const patientIds = [...new Set(myAppts.map(a=>a.patientId))];
+  const recentConsults = AppState.data.consultations.filter(c=>c.doctorId===doc?.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4);
+
+  return `
+  ${pageHead('Doctor', `Welcome, ${doc?.name||'Doctor'}`, doc?.specialization||'')}
+  <div class="grid g-4" style="margin-bottom:20px">
+    ${statCard('Total patients',patientIds.length,'var(--paper-dim)','var(--ink)','▥')}
+    ${statCard("Today's appointments",todays.length,'#E4F3F5','var(--bridge-dark)','▦')}
+    ${statCard('Pending consultations',pendingConsults,'var(--amber-bg)','var(--amber)','◍')}
+    ${statCard('Pending sync',pendingCount(),pendingCount()>0?'var(--amber-bg)':'var(--paper-dim)',pendingCount()>0?'var(--amber)':'var(--ink)','⇅')}
+  </div>
+  <div class="grid g-2">
+    <div class="card card-pad">
+      <div class="section-title">Today's schedule</div>
+      ${todays.length? todays.map(a=>apptRow(a,'doctor')).join('') : emptyStateInline('No appointments today','Enjoy the quiet — or check upcoming appointments.')}
+    </div>
+    <div class="card card-pad">
+      <div class="section-title">Recent consultations</div>
+      ${recentConsults.length? recentConsults.map(c=>`
+        <div style="padding:9px 0;border-bottom:1px solid var(--line)">
+          <div style="display:flex;justify-content:space-between"><b style="font-size:13.5px">${esc(c.patientName)}</b>${badgeFor(c.syncStatus)}</div>
+          <div style="font-size:12px;color:var(--ink-soft)">${esc(c.symptoms)} · ${fmtDate(c.date)}</div>
+        </div>`).join('') : emptyStateInline('No consultations yet','')}
+    </div>
+  </div>
+  <div class="card card-pad" style="margin-top:16px">
+    <div class="section-title">Offline records &amp; synchronization</div>
+    <p style="font-size:13px;color:var(--ink-soft)">Pending changes on this device: <b class="mono" style="color:var(--ink)">${pendingCount()}</b>. Consultation notes and prescriptions you create offline stay on this device until connectivity returns.</p>
+    <a href="#/doctor/sync" class="btn btn-outline btn-sm" style="margin-top:10px">Open sync dashboard →</a>
+  </div>`;
+}
+
+function doctorPatients(){
+  const doc = currentDoctorRecord();
+  const myApptPatientIds = new Set(AppState.data.appointments.filter(a=>a.doctorId===doc?.id).map(a=>a.patientId));
+  const list = AppState.data.patients.filter(p=>myApptPatientIds.has(p.id) || true); // clinic-wide visibility for demo
+  return `
+  ${pageHead('Doctor','Patients','Search and review patient history.')}
+  <div class="field" style="max-width:320px;margin-bottom:14px"><input id="pat-search" placeholder="Search patients by name or village…"></div>
+  <div class="card">
+    <table id="patients-table">
+      <thead><tr><th>Name</th><th>Age/Gender</th><th>Village</th><th>Blood group</th><th></th></tr></thead>
+      <tbody>
+      ${list.map(p=>`<tr data-name="${esc(p.name.toLowerCase())} ${esc((p.village||'').toLowerCase())}">
+        <td><b>${esc(p.name)}</b></td><td>${p.age} / ${p.gender}</td><td>${esc(p.village||'—')}</td><td>${esc(p.bloodGroup||'—')}</td>
+        <td><button class="btn btn-sm btn-outline" data-action="view-patient" data-id="${p.id}">View history</button></td>
+      </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function doctorAppointments(){
+  const doc = currentDoctorRecord();
+  const mine = AppState.data.appointments.filter(a=>a.doctorId===doc?.id).sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  ${pageHead('Doctor','Appointments','Accept, reject, or complete appointment requests.')}
+  <div class="card">
+    <table>
+      <thead><tr><th>Patient</th><th>Date & time</th><th>Reason</th><th>Status</th><th>Sync</th><th>Actions</th></tr></thead>
+      <tbody>
+      ${mine.length? mine.map(a=>`
+        <tr>
+          <td><b>${esc(a.patientName)}</b></td><td>${fmtDate(a.date)} · ${a.time}</td><td>${esc(a.reason)}</td>
+          <td>${badgeFor(a.status)}</td><td>${badgeFor(a.syncStatus)}</td>
+          <td style="display:flex;gap:6px">
+            ${a.status==='PENDING'?`<button class="btn btn-sm btn-primary" data-action="accept-appt" data-id="${a.id}">Accept</button><button class="btn btn-sm btn-danger" data-action="reject-appt" data-id="${a.id}">Reject</button>`:''}
+            ${a.status==='CONFIRMED'?`<button class="btn btn-sm btn-outline" data-action="complete-appt" data-id="${a.id}">Mark complete</button>`:''}
+          </td>
+        </tr>`).join('') : `<tr><td colspan="6">${emptyStateInline('No appointments assigned yet','')}</td></tr>`}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function doctorPrescriptions(){
+  const doc = currentDoctorRecord();
+  const mine = AppState.data.prescriptions.filter(r=>r.doctorId===doc?.id).sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  ${pageHead('Doctor','Prescriptions','Write and manage digital prescriptions.', `<button class="btn btn-primary" data-action="open-new-rx">+ New prescription</button>`)}
+  <div class="grid g-2">${mine.length? mine.map(prescriptionCard).join(''): emptyState('No prescriptions written yet','Create one from a patient consultation.')}</div>`;
+}
+/* ---------------- Admin pages ---------------- */
+function adminDashboard(){
+  const today = new Date().toISOString().slice(0,10);
+  const todays = AppState.data.appointments.filter(a=>a.date===today).length;
+  const completed = AppState.data.consultations.length;
+  return `
+  ${pageHead('Admin','System overview','Monitor the whole Setu network.')}
+  <div class="grid g-4" style="margin-bottom:20px">
+    ${statCard('Total patients',AppState.data.patients.length,'var(--paper-dim)','var(--ink)','▥')}
+    ${statCard('Total doctors',AppState.data.doctors.length,'#E4F3F5','var(--bridge-dark)','✚')}
+    ${statCard("Today's appointments",todays,'var(--green-bg)','#1F6B44','▦')}
+    ${statCard('Completed consultations',completed,'var(--paper-dim)','var(--ink)','◍')}
+  </div>
+  <div class="grid g-4" style="margin-bottom:20px">
+    ${statCard('Offline devices', effectiveOnline()?0:1, effectiveOnline()?'var(--paper-dim)':'var(--amber-bg)', effectiveOnline()?'var(--ink)':'var(--amber)','⛁')}
+    ${statCard('Pending synchronizations',pendingCount(),pendingCount()>0?'var(--amber-bg)':'var(--paper-dim)',pendingCount()>0?'var(--amber)':'var(--ink)','⇅')}
+    ${statCard('Conflicts',conflictCount(),conflictCount()>0?'var(--coral-bg)':'var(--paper-dim)',conflictCount()>0?'var(--coral)':'var(--ink)','⚠')}
+    ${statCard('Prescriptions issued',AppState.data.prescriptions.length,'var(--paper-dim)','var(--ink)','▧')}
+  </div>
+  <div class="grid g-2">
+    <div class="card card-pad">
+      <div class="section-title">Appointments by status</div>
+      ${barChart(['PENDING','CONFIRMED','COMPLETED','CANCELLED'].map(s=>[s,AppState.data.appointments.filter(a=>a.status===s).length]))}
+    </div>
+    <div class="card card-pad">
+      <div class="section-title">Patient registrations (last 7 days, demo)</div>
+      ${lineSpark()}
+    </div>
+  </div>`;
+}
+function barChart(pairs){
+  const max = Math.max(1,...pairs.map(p=>p[1]));
+  return `<div style="display:flex;flex-direction:column;gap:10px">${pairs.map(([label,val])=>`
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span>${label}</span><b>${val}</b></div>
+      <div class="pbar"><div style="width:${(val/max*100)||2}%"></div></div>
+    </div>`).join('')}</div>`;
+}
+function lineSpark(){
+  const pts = Array.from({length:7},()=>Math.floor(Math.random()*6)+1);
+  const max=Math.max(...pts);
+  const w=280,h=90,step=w/(pts.length-1);
+  const path = pts.map((v,i)=>`${i*step},${h-(v/max*h)+8}`).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h+16}" style="width:100%;height:110px">
+    <polyline points="${path}" fill="none" stroke="#0E7C7B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${pts.map((v,i)=>`<circle cx="${i*step}" cy="${h-(v/max*h)+8}" r="3" fill="#1FA7B8"/>`).join('')}
+  </svg>`;
+}
+
+function adminPatients(){
+  return `
+  ${pageHead('Admin','Patients','All registered patients across the network.')}
+  <div class="card"><table>
+    <thead><tr><th>Name</th><th>Age/Gender</th><th>Village</th><th>Blood group</th><th>Sync</th></tr></thead>
+    <tbody>${AppState.data.patients.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${p.age}/${p.gender}</td><td>${esc(p.village||'—')}</td><td>${esc(p.bloodGroup||'—')}</td><td>${badgeFor(p.syncStatus||'SYNCED')}</td></tr>`).join('')}</tbody>
+  </table></div>`;
+}
+function adminDoctors(){
+  return `
+  ${pageHead('Admin','Doctors','Clinical staff registered on the platform.')}
+  <div class="grid g-3">${AppState.data.doctors.map(d=>`
+    <div class="card card-pad">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+        <div style="width:38px;height:38px;border-radius:50%;background:var(--mist);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--bridge-dark)">${initials(d.name)}</div>
+        <div><div style="font-weight:600;font-size:14px">${esc(d.name)}</div><div style="font-size:12px;color:var(--ink-soft)">${esc(d.specialization)}</div></div>
+      </div>
+      <div style="font-size:12.5px;color:var(--ink-soft)">${esc(d.qualification)} · ${d.experience} yrs · ${esc(d.village)}</div>
+    </div>`).join('')}</div>`;
+}
+function adminAppointments(){
+  const all = AppState.data.appointments.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  ${pageHead('Admin','Appointments','Network-wide appointment activity.')}
+  <div class="card"><table>
+    <thead><tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Status</th><th>Sync</th></tr></thead>
+    <tbody>${all.map(a=>`<tr><td>${esc(a.patientName)}</td><td>${esc(a.doctorName)}</td><td>${fmtDate(a.date)}</td><td>${badgeFor(a.status)}</td><td>${badgeFor(a.syncStatus)}</td></tr>`).join('')}</tbody>
+  </table></div>`;
+}
+function adminReports(){
+  return `
+  ${pageHead('Admin','Reports','Aggregate activity across the platform.')}
+  <div class="grid g-2">
+    <div class="card card-pad"><div class="section-title">Consultations by specialization</div>
+      ${barChart(SPECIALIZATIONS.map(s=>{
+        const docIds = AppState.data.doctors.filter(d=>d.specialization===s).map(d=>d.id);
+        return [s, AppState.data.consultations.filter(c=>docIds.includes(c.doctorId)).length];
+      }))}
+    </div>
+    <div class="card card-pad"><div class="section-title">Synchronization activity</div>
+      ${barChart([
+        ['Synced', AppState.data.syncQueue.filter(i=>i.status==='SYNCED').length],
+        ['Pending', AppState.data.syncQueue.filter(i=>i.status==='PENDING').length],
+        ['Failed', AppState.data.syncQueue.filter(i=>i.status==='FAILED').length],
+        ['Conflict', AppState.data.syncQueue.filter(i=>i.status==='CONFLICT').length],
+      ])}
+    </div>
+  </div>`;
+}
+function adminSettings(){
+  return `
+  ${pageHead('Admin','Settings','Platform configuration (demo).')}
+  <div class="card card-pad" style="max-width:520px">
+    <div class="field"><label>Clinic network name</label><input value="Setu Rural Health Network" disabled></div>
+    <div class="field"><label>Sync retry limit</label><input value="3" disabled></div>
+    <div class="field"><label>Data retention</label><input value="Local device cache: 90 days" disabled></div>
+    <p style="font-size:12px;color:var(--ink-soft)">Settings are read-only in this prototype build.</p>
+  </div>`;
+}
+/* ---------------- Modals ---------------- */
+function openModal(title, bodyHTML, footHTML){
+  const bg = document.createElement('div');
+  bg.className='modal-bg'; bg.id='modal-bg';
+  bg.innerHTML = `<div class="modal">
+    <div class="modal-head"><h3 style="font-size:16px">${esc(title)}</h3><button class="close-x" data-action="close-modal">✕</button></div>
+    <div class="modal-body">${bodyHTML}</div>
+    ${footHTML?`<div class="modal-foot">${footHTML}</div>`:''}
+  </div>`;
+  document.body.appendChild(bg);
+  bg.addEventListener('click',(e)=>{ if(e.target===bg) closeModal(); });
+  return bg;
+}
+function closeModal(){ document.getElementById('modal-bg')?.remove(); }
+
+function openBookAppt(){
+  const modal = openModal('Book appointment', `
+    <form id="book-form">
+      <div class="field"><label>Doctor</label><select name="doctorId" required>${doctorOptionsHTML()}</select></div>
+      <div class="row2">
+        <div class="field"><label>Date</label><input type="date" name="date" required min="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="field"><label>Time</label><select name="time" required>${['09:30','10:15','11:00','13:30','14:00','15:30','16:15'].map(t=>`<option>${t}</option>`).join('')}</select></div>
+      </div>
+      <div class="field"><label>Reason for visit</label><textarea name="reason" placeholder="Briefly describe your concern" required></textarea></div>
+    </form>`,
+    `<button class="btn btn-ghost" data-action="close-modal">Cancel</button><button class="btn btn-primary" data-action="submit-book-appt">${effectiveOnline()?'Book appointment':'Save offline'}</button>`);
+}
+function openNewRx(){
+  const pats = AppState.data.patients;
+  const modal = openModal('New prescription', `
+    <form id="rx-form">
+      <div class="field"><label>Patient</label><select name="patientId" required>${pats.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></div>
+      <div id="med-rows">${medRow(0)}</div>
+      <button type="button" class="btn btn-sm btn-outline" id="add-med-row" style="margin-top:6px">+ Add medicine</button>
+      <div class="field" style="margin-top:14px"><label>Notes</label><textarea name="notes" placeholder="Additional instructions"></textarea></div>
+    </form>`,
+    `<button class="btn btn-ghost" data-action="close-modal">Cancel</button><button class="btn btn-primary" data-action="submit-new-rx">${effectiveOnline()?'Save prescription':'Save offline'}</button>`);
+  document.getElementById('add-med-row').addEventListener('click',()=>{
+    const div=document.createElement('div'); div.innerHTML = medRow(document.querySelectorAll('.med-row').length);
+    document.getElementById('med-rows').appendChild(div.firstElementChild);
+  });
+}
+function medRow(i){
+  return `<div class="med-row row2" style="grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+    <input name="med_name" placeholder="Medicine (e.g. Paracetamol 650mg)" required>
+    <input name="med_dose" placeholder="Dosage">
+    <input name="med_freq" placeholder="Frequency">
+    <input name="med_dur" placeholder="Duration">
+  </div>`;
+}
+function viewPatientHistory(patientId){
+  const p = AppState.data.patients.find(x=>x.id===patientId);
+  const recs = AppState.data.medicalRecords.filter(r=>r.patientId===patientId);
+  const cons = AppState.data.consultations.filter(c=>c.patientId===patientId);
+  const rx = AppState.data.prescriptions.filter(r=>r.patientId===patientId);
+  openModal(`${p.name} — history`, `
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px">${p.age} yrs · ${p.gender} · ${esc(p.village||'—')} · Blood group ${esc(p.bloodGroup||'—')}</div>
+    <div class="section-title">Consultations</div>
+    ${cons.length? cons.map(c=>`<div style="padding:7px 0;border-bottom:1px solid var(--line);font-size:13px"><b>${fmtDate(c.date)}</b> — ${esc(c.symptoms)}</div>`).join('') : emptyStateInline('None recorded','')}
+    <div class="section-title" style="margin-top:14px">Records</div>
+    ${recs.length? recs.map(r=>`<div style="padding:7px 0;border-bottom:1px solid var(--line);font-size:13px">${esc(r.title)}</div>`).join('') : emptyStateInline('None recorded','')}
+    <div class="section-title" style="margin-top:14px">Prescriptions</div>
+    ${rx.length? rx.map(r=>`<div style="padding:7px 0;border-bottom:1px solid var(--line);font-size:13px">${fmtDate(r.date)} — ${r.medicines.map(m=>esc(m.n)).join(', ')}</div>`).join('') : emptyStateInline('None recorded','')}
+  `, `<button class="btn btn-ghost" data-action="close-modal">Close</button>`);
+}
+/* ---------------- Shell event wiring (delegated) ---------------- */
+function attachShellHandlers(role,page){
+  const searchRec = document.getElementById('rec-search');
+  if(searchRec) searchRec.addEventListener('input',()=>{
+    const q = searchRec.value.toLowerCase();
+    document.querySelectorAll('.rec-card').forEach(c=> c.style.display = c.dataset.title.includes(q)?'':'none');
+  });
+  const searchPat = document.getElementById('pat-search');
+  if(searchPat) searchPat.addEventListener('input',()=>{
+    const q = searchPat.value.toLowerCase();
+    document.querySelectorAll('#patients-table tbody tr').forEach(r=> r.style.display = r.dataset.name.includes(q)?'':'none');
+  });
+  const consultForm = document.getElementById('consult-form');
+  if(consultForm) consultForm.addEventListener('submit', onSubmitConsult);
+}
+
+let __wired = false;
+function globalClickHandler(e){
+  const t = e.target.closest('[data-action]');
+  if(!t) return;
+  const action = t.dataset.action;
+  const id = t.dataset.id;
+
+  if(action==='logout') return logout();
+  if(action==='toggle-demo-offline') return toggleDemoOffline();
+  if(action==='manual-sync'){
+    if(!effectiveOnline()){ toast('You are offline — turn off simulated offline mode or wait for a connection.','warn'); return; }
+    return processSyncQueue();
+  }
+  if(action==='close-modal') return closeModal();
+  if(action==='open-book-appt') return openBookAppt();
+  if(action==='open-new-rx') return openNewRx();
+  if(action==='view-patient') return viewPatientHistory(id);
+  if(action==='end-call'){ toast('Call ended.','info'); return; }
+  if(action==='print-rx' || action==='download-rx'){ toast(action==='print-rx'?'Preparing print view…':'Preparing download…','info'); return; }
+  if(action==='download-record'){ toast('Preparing download…','info'); return; }
+
+  if(action==='submit-book-appt'){
+    const form = document.getElementById('book-form');
+    if(!form.reportValidity()) return;
+    const f = new FormData(form);
+    const pat = currentPatientRecord();
+    const doc = AppState.data.doctors.find(d=>d.id===f.get('doctorId'));
+    const record = {id:uid('apt'), patientId:pat.id, doctorId:doc.id, patientName:pat.name, doctorName:doc.name,
+      date:f.get('date'), time:f.get('time'), reason:f.get('reason'), status:'PENDING', createdAt:nowISO(), baseUpdatedAt:nowISO()};
+    writeLocal('appointments', record, 'CREATE').then(()=>{
+      closeModal();
+      toast(effectiveOnline()?'Appointment booked.':'Appointment saved offline — will sync when online.','success');
+      render();
+    });
+    return;
+  }
+  if(action==='cancel-appt' || action==='accept-appt' || action==='reject-appt' || action==='complete-appt'){
+    const appt = AppState.data.appointments.find(a=>a.id===id);
+    if(!appt) return;
+    appt.baseUpdatedAt = appt.updatedAt;
+    appt.status = action==='cancel-appt'?'CANCELLED': action==='accept-appt'?'CONFIRMED': action==='reject-appt'?'CANCELLED':'COMPLETED';
+    writeLocal('appointments', appt, 'UPDATE').then(()=>{ toast('Appointment updated.','success'); render(); });
+    return;
+  }
+  if(action==='submit-new-rx'){
+    const form = document.getElementById('rx-form');
+    if(!form.reportValidity()) return;
+    const f = new FormData(form);
+    const names=f.getAll('med_name'), doses=f.getAll('med_dose'), freqs=f.getAll('med_freq'), durs=f.getAll('med_dur');
+    const medicines = names.map((n,i)=>({n, d:doses[i]||'—', f:freqs[i]||'—', du:durs[i]||'—', i:'As directed'})).filter(m=>m.n.trim());
+    if(medicines.length===0){ toast('Add at least one medicine.','error'); return; }
+    const doc = currentDoctorRecord();
+    const pat = AppState.data.patients.find(p=>p.id===f.get('patientId'));
+    const record = {id:uid('rx'), patientId:pat.id, doctorId:doc.id, patientName:pat.name, doctorName:doc.name,
+      date:nowISO(), medicines, notes:f.get('notes')||'Educational prototype prescription.', createdAt:nowISO(), baseUpdatedAt:nowISO()};
+    writeLocal('prescriptions', record, 'CREATE').then(()=>{
+      closeModal();
+      toast(effectiveOnline()?'Prescription saved.':'Prescription saved offline — pending synchronization.','success');
+      render();
+    });
+    return;
+  }
+  if(action==='retry-failed') return retryFailed();
+  if(action==='resolve-conflict') return resolveConflict(id, t.dataset.keep==='server');
+}
+
+function onSubmitConsult(e){
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const doc = currentDoctorRecord();
+  const pat = AppState.data.patients.find(p=>p.id===f.get('patientId'));
+  const record = {
+    id:uid('con'), patientId:pat.id, doctorId:doc.id, patientName:pat.name, doctorName:doc.name,
+    symptoms:f.get('symptoms'), observations:f.get('observations')||'—',
+    diagnosisNotes:f.get('diagnosisNotes')||'Educational note only — not a definitive diagnosis.',
+    treatmentNotes:f.get('treatmentNotes')||'—', followUpDate:f.get('followUpDate')||null,
+    date:nowISO(), createdAt:nowISO(), baseUpdatedAt:nowISO()
+  };
+  writeLocal('consultations', record, 'CREATE').then(()=>{
+    toast(effectiveOnline()? 'Consultation synchronized successfully.' : 'Saved offline — pending synchronization.', 'success');
+    e.target.reset();
+    render();
+  });
+}
+
+/* ---------------- Init ---------------- */
+async function updateLastSyncLabel(){
+  const meta = await idbAll('meta');
+  const m = meta.find(x=>x.id==='lastSync');
+  window.__lastSyncLabel = m ? fmtDateTime(m.at) : 'never';
+}
+const _origProcessSyncQueue = processSyncQueue;
+processSyncQueue = async function(){ await _origProcessSyncQueue(); await updateLastSyncLabel(); render(); };
+
+async function init(){
+  await openLocalDB();
+  await ensureSeeded();
+  await updateLastSyncLabel();
+
+  document.body.addEventListener('click', globalClickHandler);
+
+  const saved = sessionStorage.getItem('setu_session');
+  if(saved){ try{ AppState.currentUser = JSON.parse(saved); }catch(e){} }
+
+  if(!location.hash) location.hash = AppState.currentUser ? '#/'+AppState.currentUser.role+'/dashboard' : '#/';
+  router();
+
+  if(effectiveOnline()) processSyncQueue();
+}
+init();
+</script>
+</body>
+</html>
